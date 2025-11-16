@@ -1,29 +1,26 @@
+import textwrap
 from datetime import datetime
 from io import BytesIO
-import textwrap
 from typing import Optional
-from PIL import Image
-from aiocqhttp import CQHttp
+
 import aiohttp
+from aiocqhttp import CQHttp
+from PIL import Image
+
+import astrbot.api.message_components as Comp
+from astrbot import logger
+from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, register
 from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 from astrbot.core.star.filter.platform_adapter_type import PlatformAdapterType
+
 from .draw import create_image
-import astrbot.api.message_components as Comp
-from astrbot import logger
-from astrbot.api.event import filter
 
 
-@register(
-    "astrbot_plugin_box",
-    "Zhalslar",
-    "开盒插件",
-    "1.1.7",
-    "https://github.com/Zhalslar/astrbot_plugin_box",
-)
+@register("astrbot_plugin_box", "Zhalslar", "...", "...")
 class Box(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -32,7 +29,7 @@ class Box(Star):
     async def box(self, client: CQHttp, target_id: str, group_id: str):
         """开盒的主流程函数"""
         if target_id in self.conf["box_blacklist"]:
-            return Comp.Plain("该用户无法被开盒")
+            return Comp.Plain("该用户信息被保护中")
         # 获取用户信息
         try:
             stranger_info = await client.get_stranger_info(
@@ -50,7 +47,7 @@ class Box(Star):
             member_info = {}
             pass
 
-        avatar: Optional[bytes] = await self.get_avatar(str(target_id))
+        avatar: bytes | None = await self.get_avatar(str(target_id))
         # 如果获取头像失败，使用默认白图
         if not avatar:
             with BytesIO() as buffer:
@@ -65,7 +62,7 @@ class Box(Star):
     async def on_command(
         self, event: AiocqhttpMessageEvent, input_id: int | str | None = None
     ):
-        """/盒@某人 或 /盒 QQ"""
+        """盒 @某人/QQ"""
         if self.conf["only_admin"] and not event.is_admin() and input_id:
             return
 
@@ -119,6 +116,7 @@ class Box(Star):
 
     def transform(self, info: dict, info2: dict) -> list:
         reply = []
+        d = self.conf["display"]
 
         if user_id := info.get("user_id"):
             reply.append(f"Q号：{user_id}")
@@ -126,119 +124,116 @@ class Box(Star):
         if nickname := info.get("nickname"):
             reply.append(f"昵称：{nickname}")
 
-        if card := info2.get("card"):
+        if (card := info2.get("card")) and d["card"]:
             reply.append(f"群昵称：{card}")
 
-        if title := info2.get("title"):
+        if (title := info2.get("title")) and d["title"]:
             reply.append(f"头衔：{title}")
 
-        # 状态码已无法正确获取
-        # if info.get('status', False) and int(info['status']) != 20:
-        # reply.append(f"状态：{get_state(info['uin'])}")
-
-        sex = info.get("sex")
-        if sex == "male":
-            reply.append("性别：男孩纸")
-        elif sex == "female":
-            reply.append("性别：女孩纸")
+        if d["sex"]:
+            sex = info.get("sex")
+            if sex == "male":
+                reply.append("性别：男")
+            elif sex == "female":
+                reply.append("性别：女")
 
         if (
             info.get("birthday_year")
             and info.get("birthday_month")
             and info.get("birthday_day")
         ):
-            reply.append(
-                f"诞辰：{info['birthday_year']}-{info['birthday_month']}-{info['birthday_day']}"
-            )
-            reply.append(
-                f"星座：{self.get_constellation(int(info['birthday_month']), int(info['birthday_day']))}"
-            )
-            reply.append(
-                f"生肖：{self.get_zodiac(int(info['birthday_year']), int(info['birthday_month']), int(info['birthday_day']))}"
-            )
+            if d["birthday"]:
+                reply.append(
+                    f"生日：{info['birthday_year']}-{info['birthday_month']}-{info['birthday_day']}"
+                )
+            if d["constellation"]:
+                reply.append(
+                    f"星座：{self.get_constellation(int(info['birthday_month']), int(info['birthday_day']))}"
+                )
+            if d["zodiac"]:
+                reply.append(
+                    f"生肖：{self.get_zodiac(int(info['birthday_year']), int(info['birthday_month']), int(info['birthday_day']))}"
+                )
 
-        if age := info.get("age"):
+        if (age := info.get("age")) and d["age"]:
             reply.append(f"年龄：{age}岁")
 
-        if phoneNum := info.get("phoneNum"):
+        if (phoneNum := info.get("phoneNum")) and d["phoneNum"]:
             if phoneNum != "-":
                 reply.append(f"电话：{phoneNum}")
 
-        if eMail := info.get("eMail", False):
+        if (eMail := info.get("eMail")) and d["eMail"]:
             if eMail != "-":
                 reply.append(f"邮箱：{eMail}")
 
-        if postCode := info.get("postCode", False):
+        if (postCode := info.get("postCode")) and d["postCode"]:
             if postCode != "-":
                 reply.append(f"邮编：{postCode}")
 
-
-        country = info.get("country")
-        province = info.get("province")
-        city = info.get("city")
-        if country == "中国" and (province or city):
-            reply.append(f"现居：{province or ''}-{city or ''}")
-        elif country:
-            reply.append(f"现居：{country}")
-
-
-        if homeTown := info.get("homeTown"):
+        if (homeTown := info.get("homeTown")) and d["homeTown"]:
             if homeTown != "0-0-0":
                 reply.append(f"来自：{self.parse_home_town(homeTown)}")
 
-        if address := info.get("address", False):
-            if address != "-":
-                reply.append(f"地址：{address}")
+        if d["address"]:
+            country = info.get("country")
+            province = info.get("province")
+            city = info.get("city")
+            if country == "中国" and (province or city):
+                reply.append(f"现居：{province or ''}-{city or ''}")
+            elif country:
+                reply.append(f"现居：{country}")
 
-        if kBloodType := info.get("kBloodType"):
+            if address := info.get("address", False):
+                if address != "-":
+                    reply.append(f"地址：{address}")
+
+        if (kBloodType := info.get("kBloodType")) and d["kBloodType"]:
             reply.append(f"血型：{self.get_blood_type(int(kBloodType))}")
 
         if (
             makeFriendCareer := info.get("makeFriendCareer")
-        ) and makeFriendCareer != "0":
+        ) and makeFriendCareer != "0" and d["makeFriendCareer"]:
             reply.append(f"职业：{self.get_career(int(makeFriendCareer))}")
 
-        if remark := info.get("remark"):
+        if (remark := info.get("remark")) and d["remark"]:
             reply.append(f"备注：{remark}")
 
-        if labels := info.get("labels"):
+        if (labels := info.get("labels")) and d["labels"]:
             reply.append(f"标签：{labels}")
 
-        if info2.get("unfriendly"):
+        if info2.get("unfriendly") and d["unfriendly"]:
             reply.append("不良记录：有")
 
-        if info2.get("is_robot"):
-            reply.append("是否为bot: 是")
+        if info2.get("is_robot") and d["is_robot"]:
+            reply.append("机器人账号: 是")
 
-        if info.get("is_vip"):
-            reply.append("VIP：已开")
+        if d["vip"]:
+            if info.get("is_vip"):
+                reply.append("QQVIP：已开")
 
-        if info.get("is_years_vip"):
-            reply.append("年费VIP：已开")
+            if info.get("is_years_vip"):
+                reply.append("年VIP：已开")
 
-        if int(info.get("vip_level", 0)) != 0:
-            reply.append(f"VIP等级：{info['vip_level']}")
+            if int(info.get("vip_level", 0)) != 0:
+                reply.append(f"VIP等级：{info['vip_level']}")
 
-        if int(info.get("login_days", 0)) != 0:
-            reply.append(f"连续登录天数：{info['login_days']}")
-
-        if level := info2.get("level"):
+        if (level := info2.get("level")) and d["level"]:
             reply.append(f"群等级：{int(level)}级")
 
-        if join_time := info2.get("join_time"):
+        if (join_time := info2.get("join_time")) and d["join_time"]:
             reply.append(
                 f"加群时间：{datetime.fromtimestamp(join_time).strftime('%Y-%m-%d')}"
             )
 
-        if qqLevel := info.get("qqLevel"):
+        if (qqLevel := info.get("qqLevel")) and d["qqLevel"]:
             reply.append(f"QQ等级：{self.qqLevel_to_icon(int(qqLevel))}")
 
-        if reg_time := info.get("reg_time"):
+        if (reg_time := info.get("reg_time")) and d["reg_time"]:
             reply.append(
                 f"注册时间：{datetime.fromtimestamp(reg_time).strftime('%Y年')}"
             )
 
-        if long_nick := info.get("long_nick"):
+        if (long_nick := info.get("long_nick")) and d["long_nick"]:
             lines = textwrap.wrap(text="签名：" + long_nick, width=15)
             reply.extend(lines)
 

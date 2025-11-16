@@ -22,9 +22,150 @@
         "default": []
     },
     "box_blacklist": {
-        "description": "开盒黑名单",
+        "description": "信息保护用户",
         "type": "list",
         "hint": "开盒时，会忽略黑名单中的用户，建议将bot自身QQ号写上",
         "default": []
+    },
+    "display": {
+        "description": "信息显示设置",
+        "type": "object",
+        "hint": "只有能够获取到的信息才会展示，未获取到的信息即使启用了也不会展示的",
+        "obvious_hint": true,
+        "items": {
+            "card": {
+                "description": "显示用户群昵称",
+                "type": "bool",
+                "default": true
+            },
+            "title": {
+                "description": "显示用户群头衔",
+                "type": "bool",
+                "default": true
+            },
+            "sex": {
+                "description": "显示用户性别",
+                "type": "bool",
+                "default": true
+            },
+
+            "birthday": {
+                "description": "显示用户生日",
+                "type": "bool",
+                "default": true
+            },
+            "constellation": {
+                "description": "显示用户星座",
+                "type": "bool",
+                "hint": "此数据通过用户生日计算得出，若不开启“显示用户生日”则此项无效",
+                "default": true
+            },
+            "zodiac": {
+                "description": "显示用户生肖",
+                "type": "bool",
+                "hint": "此数据通过用户生日计算得出，若不开启“显示用户生日”则此项无效",
+                "default": true
+            },
+            "age": {
+                "description": "显示用户年龄",
+                "type": "bool",
+                "default": true
+            },
+            "phoneNum": {
+                "description": "显示用户手机号码",
+                "type": "bool",
+                "default": true,
+                "hint": "只能获取首尾几位，由于号码信息较为敏感，介意的话就关闭此项",
+                "obvious_hint": true
+            },
+            "eMail": {
+                "description": "显示用户电子邮箱",
+                "type": "bool",
+                "default": true
+            },
+            "postCode": {
+                "description": "显示用户邮政编码",
+                "type": "bool",
+                "default": true
+            },
+            "homeTown": {
+                "description": "显示用户家乡城市",
+                "type": "bool",
+                "default": true,
+                "hint": "由于API限制，信息显示可能不够精确"
+            },
+            "address": {
+                "description": "显示用户现居城市",
+                "type": "bool",
+                "default": true,
+                "hint": "由于API限制，信息显示可能不够精确"
+            },
+            "kBloodType": {
+                "description": "显示用户血型",
+                "type": "bool",
+                "default": true
+            },
+            "makeFriendCareer": {
+                "description": "显示用户职业",
+                "type": "bool",
+                "default": true
+            },
+            "remark": {
+                "description": "显示用户备注",
+                "type": "bool",
+                "default": true,
+                "hint": "显示机器人账号上对该用户的备注"
+            },
+            "labels": {
+                "description": "显示用户个性标签",
+                "type": "bool",
+                "default": true,
+                "hint": "该选项可能无法正常工作"
+            },
+            "unfriendly": {
+                "description": "显示用户是否为风险账号",
+                "type": "bool",
+                "default": true,
+                "hint": "该选项可能无法正常工作"
+            },
+            "is_robot": {
+                "description": "显示识别QQ机器人",
+                "type": "bool",
+                "default": true
+            },
+            "vip": {
+                "description": "是否显示用户VIP信息",
+                "type": "bool",
+                "default": true
+            },
+            "level": {
+                "description": "显示用户群等级",
+                "type": "bool",
+                "default": true,
+                "hint": "该用户若不在群内则无效"
+            },
+            "join_time": {
+                "description": "显示用户加群时间",
+                "type": "bool",
+                "default": true,
+                "hint": "该用户若不在群内则无效"
+            },
+            "qqLevel":{
+                "description": "显示用户QQ等级",
+                "type": "bool",
+                "default": true
+            },
+            "reg_time": {
+                "description": "显示注册QQ的时间",
+                "type": "bool",
+                "default": true,
+                "hint": "可能只能精确到年份"
+            },
+            "long_nick": {
+                "description": "显示用户个性签名",
+                "type": "bool",
+                "default": true
+            }
+        }
     }
 }
