@@ -1,10 +1,11 @@
 import textwrap
-from datetime import datetime, timedelta
+from datetime import date, datetime
 from io import BytesIO
 
 import aiohttp
 from aiocqhttp import CQHttp
 from PIL import Image
+from zhdate import ZhDate
 
 import astrbot.api.message_components as Comp
 from astrbot import logger
@@ -303,8 +304,11 @@ class Box(Star):
 
     @staticmethod
     def get_zodiac(year: int, month: int, day: int) -> str:
-        """2024 龙年为基准，立春换年（1900-2099 误差<1天）"""
         zodiacs = [
+            "鼠🐀",
+            "牛🐂",
+            "虎🐅",
+            "兔🐇",
             "龙🐉",
             "蛇🐍",
             "马🐎",
@@ -313,16 +317,15 @@ class Box(Star):
             "鸡🐔",
             "狗🐕",
             "猪🐖",
-            "鼠🐀",
-            "牛🐂",
-            "虎🐅",
-            "兔🐇",
         ]
-        dt = datetime(year, month, day)
-        # 计算当年立春（简化公式）
-        spring = datetime(1900, 1, 31) + timedelta(days=(year - 1900) * 365.2422)
-        ganz_year = year if dt >= spring else year - 1
-        return zodiacs[(ganz_year - 2024) % 12]
+        current = date(year, month, day)
+        # 获取该年农历正月初一的公历日期（春节）
+        spring = ZhDate(year, 1, 1).to_datetime().date()
+        # 决定生肖对应的年份
+        zodiac_year = year if current >= spring else year - 1
+        # 生肖序号：2020年为鼠年
+        index = (zodiac_year - 2020) % 12
+        return zodiacs[index]
 
     @staticmethod
     def get_career(num: int) -> str:
