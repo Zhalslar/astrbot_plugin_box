@@ -21,11 +21,23 @@
         "hint": "只自动开盒白名单群聊的新群友/主动退群的人，不填则默认所有群聊都启用自动开盒",
         "default": []
     },
-    "box_blacklist": {
+    "protect_ids": {
         "description": "信息保护用户",
         "type": "list",
-        "hint": "开盒时，会忽略黑名单中的用户，建议将bot自身QQ号写上",
+        "hint": "开盒时，会忽略黑名单中的用户，注意：Bot和Bot管理员已默认被保护，除非Bot管理员亲自使用命令盒自己，否则无法被开盒",
         "default": []
+    },
+    "cookie": {
+        "description": "Cookie",
+        "type": "text",
+        "hint": "普通版此项为无效配置！用于pro版的高端局",
+        "default": ""
+    },
+    "desensitize": {
+        "description": "去敏化",
+        "type": "bool",
+        "hint": "是否对敏感信息进行去敏化处理，包括：将手机号中间四位改为星号（普通版此项为无效配置）",
+        "default": true
     },
     "display": {
         "description": "信息显示设置",
@@ -48,7 +60,6 @@
                 "type": "bool",
                 "default": true
             },
-
             "birthday": {
                 "description": "显示用户生日",
                 "type": "bool",
@@ -150,7 +161,7 @@
                 "default": true,
                 "hint": "该用户若不在群内则无效"
             },
-            "qqLevel":{
+            "qqLevel": {
                 "description": "显示用户QQ等级",
                 "type": "bool",
                 "default": true
