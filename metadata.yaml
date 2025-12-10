@@ -1,7 +1,7 @@
 name: astrbot_plugin_box # 这是你的插件的唯一识别名。
 display_name: 开盒插件
-desc: 开盒别人！  # 插件简短描述
-help: 指令：/盒@某人 或 /盒 QQ  # 插件的帮助信息
+desc: 利用Onebot协议的接口获取QQ用户信息,并以图片形式展示  # 插件简短描述
+help: ...  # 插件的帮助信息
 version: v1.2.1 # 插件版本号。格式：v1.1.1 或者 v1.1
 author: Zhalslar # 作者
 repo: https://github.com/Zhalslar/astrbot_plugin_box # 插件的仓库地址
