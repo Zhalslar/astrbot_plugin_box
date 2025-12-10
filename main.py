@@ -93,8 +93,6 @@ class BoxPlugin(Star):
 
     async def box(self, event: AiocqhttpMessageEvent, target_id: str, group_id: str):
         """开盒主流程"""
-        if target_id in self.conf["protect_ids"]:
-            return Comp.Plain("该用户信息被保护中")
         # 获取用户信息
         try:
             stranger_info: dict = await event.bot.get_stranger_info(  # type: ignore
