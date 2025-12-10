@@ -37,16 +37,16 @@ git clone https://github.com/Zhalslar/astrbot_plugin_box
 
 - 自动开盒新群友（需在配置里添加群聊白名单）
 
-- 指令调用，如下：
+- 指令调用，支持直接@或者@加上QQ号，如：
 
 ```plaintext
 /盒@某人
-/盒 QQ号
+/盒 @QQ
 ```
 
 ### 示例图
 
-![33cd17b7bd27520aee2f463ff8a9d12](https://github.com/user-attachments/assets/97ffe26f-bf18-4cbe-93f4-1eb82e08edeb)
+<img width="1102" height="417" alt="图片" src="https://github.com/user-attachments/assets/5174a076-b9c3-443a-9f77-4acea32268b3" />
 
 ## 👥 贡献指南
 
