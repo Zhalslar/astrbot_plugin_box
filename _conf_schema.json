@@ -39,12 +39,6 @@
         "hint": "是否对敏感信息进行去敏化处理，包括：将手机号中间四位改为星号（Pro版专用，普通版无需配置）",
         "default": true
     },
-    "recall_time":{
-        "description": "撤回时间(秒)",
-        "type": "int",
-        "hint": "几秒后撤回开盒卡片，设为 0 则不撤回",
-        "default": 5
-    },
     "display": {
         "description": "信息显示设置",
         "type": "object",
@@ -184,5 +178,17 @@
                 "default": true
             }
         }
+    },
+    "recall_time": {
+        "description": "撤回时间(秒)",
+        "type": "int",
+        "hint": "几秒后撤回开盒卡片，设为 0 则不撤回",
+        "default": 10
+    },
+    "clean_cache": {
+        "description": "重载插件时清空缓存",
+        "hint": "当插件重载时，清空缓存的开盒卡片",
+        "type": "bool",
+        "default": false
     }
 }

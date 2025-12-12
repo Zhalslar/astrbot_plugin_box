@@ -1,5 +1,6 @@
 import asyncio
 import re
+import shutil
 import textwrap
 import weakref
 from datetime import datetime
@@ -40,7 +41,7 @@ class BoxPlugin(Star):
         super().__init__(context)
         self.conf = config
         # 缓存目录
-        self.cache_dir: Path = StarTools.get_data_dir("astrbot_plugin_boxpro")
+        self.cache_dir: Path = StarTools.get_data_dir("astrbot_plugin_box")
         # 保护名单
         self.protect_ids = config.get("protect_ids", [])
         admins_id = self.context.get_config().get("admins_id", [])
@@ -137,16 +138,20 @@ class BoxPlugin(Star):
                         number = re.sub(r"(\d{3})\d{4}(\d{4})", r"\1****\2", number)
                     stranger_info["phoneNum"] = number
 
+        # 解析数据
+        display: list = self._transform(stranger_info, member_info)
+
         # 缓存机制
-        digest = render_digest(stranger_info, member_info, avatar)
+        digest = render_digest(display, avatar)
         cache_name = f"{target_id}_{group_id}_{digest}.png"
         cache_path = self.cache_dir / cache_name
         if cache_path.exists():
             image = cache_path.read_bytes()
+            logger.debug(f"命中缓存: {cache_path}")
         else:
-            reply: list = self._transform(stranger_info, member_info)
-            image: bytes = self.renderer.create(avatar, reply)
+            image: bytes = self.renderer.create(avatar, display)
             cache_path.write_bytes(image)
+            logger.debug(f"写入缓存: {cache_path}")
 
         # 消息链
         chain = [Comp.Image.fromBytes(image)]
@@ -321,8 +326,20 @@ class BoxPlugin(Star):
 
     async def terminate(self):
         """插件卸载时"""
+        # 取消未完成的撤回任务
         if self._recall_tasks:
             for t in list(self._recall_tasks):
                 t.cancel()
             await asyncio.gather(*self._recall_tasks, return_exceptions=True)
+
+        # 关闭 aiohttp Session
         await self.web.close()
+
+        # 3. 清空缓存目录
+        if self.conf["clean_cache"] and self.cache_dir and self.cache_dir.exists():
+            try:
+                shutil.rmtree(self.cache_dir)
+                logger.debug(f"[BoxPlugin] 缓存已清空：{self.cache_dir}")
+            except Exception as e:
+                logger.error(f"[BoxPlugin] 清空缓存失败：{e}")
+            self.cache_dir.mkdir(parents=True, exist_ok=True)

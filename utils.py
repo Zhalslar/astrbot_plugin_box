@@ -56,11 +56,10 @@ def get_ats(
     return list(ats)
 
 
-def render_digest(stranger: dict, member: dict, avatar: bytes) -> str:
+def render_digest(display: list, avatar: bytes) -> str:
     """计算哈希值：全字段(int/str)保留，头像单独md5"""
     payload = {
-        "stranger": stranger,
-        "member": member,
+        "display": display,
         "avatar": hashlib.md5(avatar).hexdigest(),
     }
     return hashlib.md5(
