@@ -48,6 +48,7 @@ git clone https://github.com/Zhalslar/astrbot_plugin_box
 
 <img width="1102" height="417" alt="图片" src="https://github.com/user-attachments/assets/5174a076-b9c3-443a-9f77-4acea32268b3" />
 
+
 ## 👥 贡献指南
 
 - 🌟 Star 这个项目！（点右上角的星星，感谢支持！）

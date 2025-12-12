@@ -1,18 +1,25 @@
+import asyncio
 import re
 import textwrap
+import weakref
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
+from aiocqhttp import CQHttp
 from PIL import Image
 
 import astrbot.api.message_components as Comp
+from astrbot.api import logger
 from astrbot.api.event import filter
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star
 from astrbot.core.config.astrbot_config import AstrBotConfig
+from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 from astrbot.core.star.filter.platform_adapter_type import PlatformAdapterType
+from astrbot.core.star.star_tools import StarTools
 
 from .draw import CardMaker
 from .utils import (
@@ -24,14 +31,16 @@ from .utils import (
     get_zodiac,
     parse_home_town,
     qqLevel_to_icon,
+    render_digest,
 )
 
 
-@register("astrbot_plugin_box", "Zhalslar", "...", "...")
 class BoxPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.conf = config
+        # 缓存目录
+        self.cache_dir: Path = StarTools.get_data_dir("astrbot_plugin_boxpro")
         # 保护名单
         self.protect_ids = config.get("protect_ids", [])
         admins_id = self.context.get_config().get("admins_id", [])
@@ -41,6 +50,8 @@ class BoxPlugin(Star):
         self.renderer = CardMaker()
         # 网络工具
         self.web = WebUtils()
+        # 撤回任务
+        self._recall_tasks: weakref.WeakSet[asyncio.Task] = weakref.WeakSet()
 
     @filter.command("盒", alias={"开盒"})
     async def on_command(
@@ -53,8 +64,7 @@ class BoxPlugin(Star):
             event.get_sender_id()
         ]
         for tid in target_ids:
-            comp = await self.box(event, target_id=tid, group_id=event.get_group_id())
-            yield event.chain_result([comp])
+            await self.box(event, target_id=tid, group_id=event.get_group_id())
 
     @filter.platform_adapter_type(PlatformAdapterType.AIOCQHTTP)
     async def handle_group_add(self, event: AiocqhttpMessageEvent):
@@ -88,8 +98,7 @@ class BoxPlugin(Star):
             if user_id in self.protect_ids or user_id == event.get_self_id():
                 return
 
-            comp = await self.box(event, target_id=str(user_id), group_id=str(group_id))
-            yield event.chain_result([comp])
+            await self.box(event, target_id=str(user_id), group_id=str(group_id))
 
     async def box(self, event: AiocqhttpMessageEvent, target_id: str, group_id: str):
         """开盒主流程"""
@@ -110,7 +119,7 @@ class BoxPlugin(Star):
             member_info = {}
             pass
 
-        # 获取头像, 如果失败则使用白图
+        # 获取头像（失败则使用白图）
         avatar: bytes | None = await self.web.get_avatar(str(target_id))
         if not avatar:
             with BytesIO() as buffer:
@@ -128,9 +137,60 @@ class BoxPlugin(Star):
                         number = re.sub(r"(\d{3})\d{4}(\d{4})", r"\1****\2", number)
                     stranger_info["phoneNum"] = number
 
-        reply: list = self._transform(stranger_info, member_info)  # type: ignore
-        image: bytes = self.renderer.create(avatar, reply)
-        return Comp.Image.fromBytes(image)
+        # 缓存机制
+        digest = render_digest(stranger_info, member_info, avatar)
+        cache_name = f"{target_id}_{group_id}_{digest}.png"
+        cache_path = self.cache_dir / cache_name
+        if cache_path.exists():
+            image = cache_path.read_bytes()
+        else:
+            reply: list = self._transform(stranger_info, member_info)
+            image: bytes = self.renderer.create(avatar, reply)
+            cache_path.write_bytes(image)
+
+        # 消息链
+        chain = [Comp.Image.fromBytes(image)]
+
+        # 撤回机制
+        if self.conf["recall_time"]:
+            client = event.bot
+            obmsg = await event._parse_onebot_json(MessageChain(chain=chain))  # type: ignore
+
+            result = None
+            if group_id := event.get_group_id():
+                result = await client.send_group_msg(
+                    group_id=int(group_id), message=obmsg
+                )
+            elif user_id := event.get_sender_id():
+                result = await client.send_private_msg(
+                    user_id=int(user_id), message=obmsg
+                )
+            if result and (message_id := result.get("message_id")):
+                task = asyncio.create_task(
+                    self._recall_msg(client, int(message_id), self.conf["recall_time"])
+                )
+                self._recall_tasks.add(task)
+                task.add_done_callback(lambda t: self._recall_tasks.discard(t))
+                logger.info(
+                    f"已创建撤回任务, {self.conf['recall_time']}秒后撤回开盒卡片（{message_id}）"
+                )
+
+        # 正常发送
+        else:
+            await event.send(event.chain_result(chain))  # type: ignore
+
+        # 停止事件
+        event.stop_event()
+
+    async def _recall_msg(self, client: CQHttp, message_id: int, delay: int):
+        """撤回消息"""
+        await asyncio.sleep(delay)
+        try:
+            if message_id:
+                await client.delete_msg(message_id=message_id)
+                logger.info(f"已自动撤回消息: {message_id}")
+        except Exception as e:
+            logger.error(f"撤回消息失败: {e}")
 
     def _transform(self, info: dict, info2: dict) -> list:
         reply = []
@@ -261,4 +321,8 @@ class BoxPlugin(Star):
 
     async def terminate(self):
         """插件卸载时"""
+        if self._recall_tasks:
+            for t in list(self._recall_tasks):
+                t.cancel()
+            await asyncio.gather(*self._recall_tasks, return_exceptions=True)
         await self.web.close()

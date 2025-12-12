@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import date
 
 import aiohttp
@@ -17,8 +19,7 @@ class WebUtils:
         self.session = aiohttp.ClientSession()
 
     async def search_library(self, target_id: str, cookie: str) -> dict | None:
-        """通过library获取数据"""
-        # 普通版BOX插件不可享用
+        """通过library获取数据(Pro版专用)"""
         pass
 
     async def get_avatar(self, user_id: str) -> bytes | None:
@@ -53,6 +54,18 @@ def get_ats(
     if block_ids:
         ats.difference_update(block_ids)
     return list(ats)
+
+
+def render_digest(stranger: dict, member: dict, avatar: bytes) -> str:
+    """计算哈希值：全字段(int/str)保留，头像单独md5"""
+    payload = {
+        "stranger": stranger,
+        "member": member,
+        "avatar": hashlib.md5(avatar).hexdigest(),
+    }
+    return hashlib.md5(
+        json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
 
 
 def qqLevel_to_icon(level: int) -> str:

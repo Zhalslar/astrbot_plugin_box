@@ -30,14 +30,20 @@
     "cookie": {
         "description": "Cookie",
         "type": "text",
-        "hint": "普通版此项为无效配置！用于pro版的高端局",
+        "hint": "高端局必填（Pro版专用，普通版无需配置）",
         "default": ""
     },
     "desensitize": {
         "description": "去敏化",
         "type": "bool",
-        "hint": "是否对敏感信息进行去敏化处理，包括：将手机号中间四位改为星号（普通版此项为无效配置）",
+        "hint": "是否对敏感信息进行去敏化处理，包括：将手机号中间四位改为星号（Pro版专用，普通版无需配置）",
         "default": true
+    },
+    "recall_time":{
+        "description": "撤回时间(秒)",
+        "type": "int",
+        "hint": "几秒后撤回开盒卡片，设为 0 则不撤回",
+        "default": 5
     },
     "display": {
         "description": "信息显示设置",
