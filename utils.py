@@ -138,7 +138,7 @@ def get_zodiac(year: int, month: int, day: int) -> str:
         spring = ZhDate(year, 1, 1).to_datetime().date()
         # 决定生肖对应的年份
         zodiac_year = year if current >= spring else year - 1
-    except (TypeError, ValueError, AttributeError):
+    except (TypeError, AttributeError):
         # 如果农历日期超出范围（1900-2100）或其他错误，直接使用阳历年份
         zodiac_year = year
     
