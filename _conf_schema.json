@@ -27,18 +27,6 @@
         "hint": "开盒时，会忽略黑名单中的用户，注意：Bot和Bot管理员已默认被保护，除非Bot管理员亲自使用命令盒自己，否则无法被开盒",
         "default": []
     },
-    "cookie": {
-        "description": "Cookie",
-        "type": "text",
-        "hint": "高端局必填（Pro版专用，普通版无需配置）",
-        "default": ""
-    },
-    "desensitize": {
-        "description": "去敏化",
-        "type": "bool",
-        "hint": "是否对敏感信息进行去敏化处理，包括：将手机号中间四位改为星号（Pro版专用，普通版无需配置）",
-        "default": true
-    },
     "display": {
         "description": "信息显示设置",
         "type": "object",
@@ -190,5 +178,24 @@
         "hint": "当插件重载时，清空缓存的开盒卡片",
         "type": "bool",
         "default": false
+    },
+    "library": {
+        "description": "高级配置",
+        "type": "object",
+        "hint": "普通用户无需先写此配置，开发人员专用",
+        "items": {
+            "cookie": {
+                "description": "Cookie",
+                "type": "text",
+                "hint": "dddd",
+                "default": ""
+            },
+            "desensitize": {
+                "description": "去敏化",
+                "type": "bool",
+                "hint": "dddd",
+                "default": false
+            }
+        }
     }
 }

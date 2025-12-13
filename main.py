@@ -1,5 +1,4 @@
 import asyncio
-import re
 import shutil
 import textwrap
 import weakref
@@ -23,9 +22,16 @@ from astrbot.core.star.filter.platform_adapter_type import PlatformAdapterType
 from astrbot.core.star.star_tools import StarTools
 
 from .draw import CardMaker
+
+# library.py 可能缺失，导入时容错并静默降级
+try:
+    from .library import LibraryClient
+except Exception:
+    LibraryClient = None
+
 from .utils import (
-    WebUtils,
     get_ats,
+    get_avatar,
     get_blood_type,
     get_career,
     get_constellation,
@@ -49,10 +55,10 @@ class BoxPlugin(Star):
         )
         # 卡片生成器
         self.renderer = CardMaker()
-        # 网络工具
-        self.web = WebUtils()
         # 撤回任务
         self._recall_tasks: weakref.WeakSet[asyncio.Task] = weakref.WeakSet()
+        # Library客户端
+        self.library = LibraryClient(config) if LibraryClient else None
 
     @filter.command("盒", alias={"开盒"})
     async def on_command(
@@ -121,25 +127,23 @@ class BoxPlugin(Star):
             pass
 
         # 获取头像（失败则使用白图）
-        avatar: bytes | None = await self.web.get_avatar(str(target_id))
+        avatar: bytes | None = await get_avatar(str(target_id))
         if not avatar:
             with BytesIO() as buffer:
                 Image.new("RGB", (640, 640), (255, 255, 255)).save(buffer, format="PNG")
                 avatar = buffer.getvalue()
 
-        # 真实数据
-        if event.is_admin():
-            if real_data := await self.web.search_library(
-                target_id, self.conf["cookie"]
-            ):
-                if numbers := real_data.get("phone_numbers"):
-                    number = numbers[0]
-                    if self.conf["desensitize"]:
-                        number = re.sub(r"(\d{3})\d{4}(\d{4})", r"\1****\2", number)
-                    stranger_info["phoneNum"] = number
-
-        # 解析数据
+        # 解析 用户信息 和 群信息
         display: list = self._transform(stranger_info, member_info)
+
+        # 附加真实信息
+        if event.is_admin() and self.library:
+            try:
+                if real_info := await self.library.fetch(target_id):
+                    display.append("—— 真实数据 ——")
+                    display.extend(self.library.format_display(real_info))
+            except Exception as e:
+                logger.warning(f"获取真实信息失败:{e}，已跳过 ")
 
         # 缓存机制
         digest = render_digest(display, avatar)
@@ -333,7 +337,8 @@ class BoxPlugin(Star):
             await asyncio.gather(*self._recall_tasks, return_exceptions=True)
 
         # 关闭 aiohttp Session
-        await self.web.close()
+        if self.library:
+            await self.library.close()
 
         # 3. 清空缓存目录
         if self.conf["clean_cache"] and self.cache_dir and self.cache_dir.exists():
