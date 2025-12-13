@@ -12,30 +12,16 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 )
 
 
-class WebUtils:
-    """网络工具类"""
-
-    def __init__(self) -> None:
-        self.session = aiohttp.ClientSession()
-
-    async def search_library(self, target_id: str, cookie: str) -> dict | None:
-        """通过library获取数据(Pro版专用)"""
-        pass
-
-    async def get_avatar(self, user_id: str) -> bytes | None:
-        """获取头像"""
-        avatar_url = f"https://q4.qlogo.cn/headimg_dl?dst_uin={user_id}&spec=640"
-        try:
-            response = await self.session.get(avatar_url)
+async def get_avatar(user_id: str) -> bytes | None:
+    """获取头像"""
+    avatar_url = f"https://q4.qlogo.cn/headimg_dl?dst_uin={user_id}&spec=640"
+    try:
+        async with aiohttp.ClientSession() as session:
+            response = await session.get(avatar_url)
             response.raise_for_status()
             return await response.read()
-        except Exception as e:
-            logger.error(f"下载头像失败: {e}")
-
-    async def close(self) -> None:
-        """关闭session"""
-        await self.session.close()
-
+    except Exception as e:
+        logger.error(f"下载头像失败: {e}")
 
 def get_ats(
     event: AiocqhttpMessageEvent,
@@ -130,9 +116,9 @@ def get_zodiac(year: int, month: int, day: int) -> str:
         "狗🐕",
         "猪🐖",
     ]
-    
+
     current = date(year, month, day)
-    
+
     try:
         # 获取该年农历正月初一的公历日期（春节）
         spring = ZhDate(year, 1, 1).to_datetime().date()
@@ -141,7 +127,7 @@ def get_zodiac(year: int, month: int, day: int) -> str:
     except (TypeError, AttributeError):
         # 如果农历日期超出范围（1900-2100）或其他错误，直接使用阳历年份
         zodiac_year = year
-    
+
     # 生肖序号：2020年为鼠年
     index = (zodiac_year - 2020) % 12
     return zodiacs[index]
