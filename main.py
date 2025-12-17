@@ -188,7 +188,7 @@ class BoxPlugin(Star):
             result = await client.send_group_msg(group_id=int(group_id), message=obmsg)
         elif user_id := event.get_sender_id():
             result = await client.send_private_msg(user_id=int(user_id), message=obmsg)
-        if result and (message_id := result.get("message_id")):
+        if result and (message_id := result.get("message_id")) and recall_time:
             task = asyncio.create_task(
                 self._recall_msg(client, int(message_id), recall_time)
             )
