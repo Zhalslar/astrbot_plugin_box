@@ -5,7 +5,7 @@
 
 # astrbot_plugin_box
 
-_✨ [astrbot](https://github.com/AstrBotDevs/AstrBot) 开盒插件 ✨_  
+_✨ 开盒插件 ✨_  
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -37,7 +37,7 @@ git clone https://github.com/Zhalslar/astrbot_plugin_box
 
 - 自动开盒新群友（需在配置里添加群聊白名单）
 
-- 指令调用，支持直接@或者@加上QQ号，如：
+- 指令调用，支持直接@或者@加上QQ号(请必须加上@， 不要直接用一串数字)，如：
 
 ```plaintext
 /盒@某人
