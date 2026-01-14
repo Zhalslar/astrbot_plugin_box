@@ -1,7 +1,7 @@
 name: astrbot_plugin_box
-display_name: 开盒插件
-desc: 利用Onebot协议的接口获取QQ用户信息,并以图片形式展示
+display_name: QQ资料卡片
+desc: 遵循OnebotV11协议，以卡片形式展示QQ用户主页资料
 help: 略
-version: v1.2.5
+version: v1.2.6
 author: Zhalslar
 repo: https://github.com/Zhalslar/astrbot_plugin_box
