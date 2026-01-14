@@ -5,7 +5,7 @@
 
 # astrbot_plugin_box
 
-_✨ 开盒插件 ✨_  
+_✨ QQ资料卡片插件 ✨_  
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -16,32 +16,23 @@ _✨ 开盒插件 ✨_
 
 ## 🤝 介绍
 
-开盒别人！利用Onebot协议的接口获取QQ用户信息,并以图片形式展示（获取的信息是QQ主页也能提供的）
+利用Onebot协议的接口获取QQ用户信息,并以图片形式展示（获取的信息是QQ主页也能提供的）
 
 ## 📦 安装
 
-- 可以直接在astrbot的插件市场搜索astrbot_plugin_box，点击安装，耐心等待安装完成即可
-- 若是安装失败，可以尝试直接克隆源码：
-
-```bash
-# 克隆仓库到插件目录
-cd /AstrBot/data/plugins
-git clone https://github.com/Zhalslar/astrbot_plugin_box
-
-# 控制台重启AstrBot
-```
+在astrbot的插件市场搜索astrbot_plugin_box，点击安装即可
 
 ## ⌨️ 使用说明
 
 ### 命令
 
-- 自动开盒新群友（需在配置里添加群聊白名单）
+- 自动展示新群友的信息卡片（需在配置里添加群聊白名单）
 
 - 指令调用，支持直接@或者@加上QQ号(请必须加上@， 不要直接用一串数字)，如：
 
 ```plaintext
-/盒@某人
-/盒 @QQ
+/box@某人
+/box @QQ
 ```
 
 ### 示例图
@@ -58,7 +49,7 @@ git clone https://github.com/Zhalslar/astrbot_plugin_box
 
 ## 📌 注意事项
 
-- 开盒信息在QQ主页也能查看，本插件仅供学习交流，作者不承担任何责任
+- 卡片信息在QQ主页也能查看，本插件仅供学习交流，作者不承担任何责任
 - 想第一时间得到反馈的可以来作者的插件反馈群（QQ群）：460973561（不点star不给进）
 
 ## 🚫 免责声明
