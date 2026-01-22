@@ -3,7 +3,6 @@ import shutil
 import textwrap
 import weakref
 from io import BytesIO
-from pathlib import Path
 
 from aiocqhttp import CQHttp
 from PIL import Image
@@ -19,8 +18,8 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 from astrbot.core.star.filter.platform_adapter_type import PlatformAdapterType
-from astrbot.core.star.star_tools import StarTools
 
+from .core.config import PluginConfig
 from .core.draw import CardMaker
 from .core.field_mapping import FIELD_MAPPING, LABEL_TO_KEY
 
@@ -42,31 +41,22 @@ from .core.utils import (
 class BoxPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
-        self.conf = config
-        # 缓存目录
-        self.cache_dir: Path = StarTools.get_data_dir("astrbot_plugin_box")
-        # 保护名单
-        self.protect_ids = list(
-            set(config["protect_ids"])
-            | set(self.context.get_config().get("admins_id", []))
-        )
+        self.cfg = PluginConfig(config, context)
         # 卡片生成器
         self.renderer = CardMaker()
+        # Library客户端
+        self.library = LibraryClient(self.cfg) if LibraryClient else None
         # 撤回任务
         self._recall_tasks: weakref.WeakSet[asyncio.Task] = weakref.WeakSet()
-        # Library客户端
-        self.library = LibraryClient(config) if LibraryClient else None
-        # 显示选项(控制这需要显示的字段)
-        self.display_options: list[str] = config["display_options"]
 
     @filter.command("盒", alias={"开盒"})
     async def on_command(
         self, event: AiocqhttpMessageEvent, input_id: int | str | None = None
     ):
         """盒 @某人/QQ"""
-        if self.conf["only_admin"] and not event.is_admin() and input_id:
+        if self.cfg.only_admin and not event.is_admin() and input_id:
             return
-        target_ids = get_ats(event, noself=True, block_ids=self.protect_ids) or [
+        target_ids = get_ats(event, noself=True, block_ids=self.cfg.protect_ids) or [
             event.get_sender_id()
         ]
         for tid in target_ids:
@@ -82,11 +72,11 @@ class BoxPlugin(Star):
             and raw.get("user_id") != raw.get("self_id")
             and (
                 raw.get("notice_type") == "group_increase"
-                and self.conf["increase_box"]
+                and self.cfg.autobox.enter
                 or (
                     raw.get("notice_type") == "group_decrease"
                     and raw.get("sub_type") == "leave"
-                    and self.conf["decrease_box"]
+                    and self.cfg.autobox.exit
                 )
             )
         ):
@@ -95,13 +85,13 @@ class BoxPlugin(Star):
 
             # 群聊白名单
             if (
-                self.conf["auto_box_groups"]
-                and group_id not in self.conf["auto_box_groups"]
+                self.cfg.autobox.white_groups
+                and group_id not in self.cfg.autobox.white_groups
             ):
                 return
 
             # 保护名单
-            if user_id in self.protect_ids or user_id == event.get_self_id():
+            if user_id in self.cfg.protect_ids or user_id == event.get_self_id():
                 return
 
             await self.box(event, target_id=str(user_id), group_id=str(group_id))
@@ -142,14 +132,14 @@ class BoxPlugin(Star):
                 if real_info := await self.library.fetch(target_id):
                     display.append("—— 真实数据 ——")
                     display.extend(self.library.format_display(real_info))
-                    recall_time = self.conf["library"]["recall_desen_time"]
+                    recall_time = self.cfg.library.recall_desen_time
             except Exception as e:
                 logger.warning(f"获取真实信息失败:{e}，已跳过 ")
 
         # 缓存机制
         digest = render_digest(display, avatar)
         cache_name = f"{target_id}_{group_id}_{digest}.png"
-        cache_path = self.cache_dir / cache_name
+        cache_path = self.cfg.cache_dir / cache_name
         if cache_path.exists():
             image = cache_path.read_bytes()
             logger.debug(f"命中缓存: {cache_path}")
@@ -162,7 +152,7 @@ class BoxPlugin(Star):
         chain: list[BaseMessageComponent] = [Comp.Image.fromBytes(image)]
 
         if not recall_time:
-            recall_time = self.conf["recall_time"]
+            recall_time = self.cfg.recall_time
 
         # 撤回机制
         if recall_time:
@@ -195,7 +185,7 @@ class BoxPlugin(Star):
             self._recall_tasks.add(task)
             task.add_done_callback(lambda t: self._recall_tasks.discard(t))
             logger.info(
-                f"已创建撤回任务, {self.conf['recall_time']}秒后撤回开盒卡片（{message_id}）"
+                f"已创建撤回任务, {self.cfg.recall_time}秒后撤回开盒卡片（{message_id}）"
             )
 
     async def _recall_msg(self, client: CQHttp, message_id: int, delay: int):
@@ -214,7 +204,7 @@ class BoxPlugin(Star):
 
         # 将 disply_options 中的中文名转换为英文字段名集合
         enabled_keys = {
-            LABEL_TO_KEY.get(label, label) for label in self.display_options
+            LABEL_TO_KEY.get(label, label) for label in self.cfg.display_options
         }
 
         for field in FIELD_MAPPING:
@@ -325,11 +315,13 @@ class BoxPlugin(Star):
         if self.library:
             await self.library.close()
 
-        # 3. 清空缓存目录
-        if self.conf["clean_cache"] and self.cache_dir and self.cache_dir.exists():
+        # 删除缓存
+        if (
+            self.cfg.clean_cache
+            and self.cfg.cache_dir.exists()
+        ):
             try:
-                shutil.rmtree(self.cache_dir)
-                logger.debug(f"[BoxPlugin] 缓存已清空：{self.cache_dir}")
+                shutil.rmtree(self.cfg.cache_dir)
+                logger.debug(f"[BoxPlugin] 缓存已清空：{self.cfg.cache_dir}")
             except Exception as e:
                 logger.error(f"[BoxPlugin] 清空缓存失败：{e}")
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
