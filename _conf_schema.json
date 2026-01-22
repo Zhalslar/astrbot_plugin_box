@@ -5,27 +5,34 @@
         "hint": "但自己开盒自己不受限制",
         "default": false
     },
-    "increase_box": {
-        "description": "自动开盒新进群的人",
-        "type": "bool",
-        "default": false
-    },
-    "decrease_box": {
-        "description": "自动开盒主动退群的人",
-        "type": "bool",
-        "default": false
-    },
-    "auto_box_groups": {
-        "description": "自动开盒群聊白名单",
-        "type": "list",
-        "hint": "只自动开盒白名单群聊的新群友/主动退群的人，不填则默认所有群聊都启用自动开盒",
-        "default": []
-    },
     "protect_ids": {
         "description": "信息保护用户",
         "type": "list",
         "hint": "开盒时，会忽略黑名单中的用户，注意：Bot和Bot管理员已默认被保护，除非Bot管理员亲自使用命令盒自己，否则无法被开盒",
         "default": []
+    },
+    "autobox": {
+        "description": "自动开盒配置",
+        "type": "object",
+        "hint": "",
+        "items": {
+            "white_groups": {
+                "description": "自动开盒群聊白名单",
+                "type": "list",
+                "hint": "只自动开盒白名单群聊的新群友/主动退群的人，不填则默认所有群聊都启用自动开盒",
+                "default": []
+            },
+            "enter": {
+                "description": "自动开盒新进群的人",
+                "type": "bool",
+                "default": false
+            },
+            "exit": {
+                "description": "自动开盒主动退群的人",
+                "type": "bool",
+                "default": false
+            }
+        }
     },
     "display_options": {
         "description": "信息显示选项",
@@ -112,7 +119,7 @@
         "type": "object",
         "hint": "普通用户无需先写此配置，开发人员专用",
         "items": {
-            "cookie": {
+            "cookies": {
                 "description": "Cookie",
                 "hint": "略",
                 "type": "text",
