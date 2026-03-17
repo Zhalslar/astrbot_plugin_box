@@ -5,3 +5,5 @@ help: 略
 version: v1.2.6
 author: Zhalslar
 repo: https://github.com/Zhalslar/astrbot_plugin_box
+support_platforms:
+  - aiocqhttp
