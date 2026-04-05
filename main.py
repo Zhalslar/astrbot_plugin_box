@@ -1,6 +1,7 @@
 import asyncio
 import shutil
 import textwrap
+from typing import Any
 import weakref
 from dataclasses import dataclass, field
 from io import BytesIO
@@ -50,9 +51,7 @@ class BoxResult:
     error: str = ""
 
     display: list[str] = field(default_factory=list)
-
     image: bytes | None = None
-    component: BaseMessageComponent | None = None
 
     recall_time: int = 0
 
@@ -266,6 +265,8 @@ class BoxPlugin(Star):
             image = self.renderer.create(avatar, result.display)
             cache_path.write_bytes(image)
 
+        result.image = image
+
         chain: list[BaseMessageComponent] = [Comp.Image.fromBytes(image)]
 
         recall_time = result.recall_time or self.cfg.recall_time
@@ -310,7 +311,11 @@ class BoxPlugin(Star):
     # =========================
     # 数据转换（保持不动）
     # =========================
-    def _transform(self, info1: dict, info2: dict) -> list[str]:
+    def _transform(
+        self,
+        info1: dict[str, Any],
+        info2: dict[str, Any],
+    ) -> list[str]:
         reply: list[str] = []
 
         enabled_keys = {
@@ -354,7 +359,13 @@ class BoxPlugin(Star):
 
         return reply
 
-    def _compute_field(self, key, label, info1, info2):
+    def _compute_field(
+        self,
+        key: str,
+        label: str,
+        info1: dict[str, Any],
+        info2: dict[str, Any],
+    ):
         if key == "birthday":
             y, m, d = (
                 info1.get("birthday_year"),
