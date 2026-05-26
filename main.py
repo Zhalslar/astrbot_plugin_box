@@ -1,10 +1,10 @@
 import asyncio
-import shutil
 import textwrap
-from typing import Any
 import weakref
 from dataclasses import dataclass, field
+from datetime import date
 from io import BytesIO
+from typing import Any
 
 from aiocqhttp import CQHttp
 from PIL import Image
@@ -74,13 +74,13 @@ class BoxPlugin(Star):
         super().__init__(context)
         self.cfg = PluginConfig(config, context)
         self.renderer = CardMaker()
-        self.library = LibraryClient(self.cfg) if LibraryClient else None
+        self.library = LibraryClient() if LibraryClient else None
         self._recall_tasks: weakref.WeakSet[asyncio.Task] = weakref.WeakSet()
 
     # =========================
     # 指令入口
     # =========================
-    @filter.command("盒", alias={"开盒"})
+    @filter.command("盒", alias={"开盒", "box"})
     async def on_command(
         self, event: AiocqhttpMessageEvent, input_id: int | str | None = None
     ):
@@ -108,13 +108,13 @@ class BoxPlugin(Star):
         self,
         event: AiocqhttpMessageEvent,
         user_id: str = "",
-        send_image: bool = False,
+        send_image: bool = True,
     ):
         """
         查询 QQ 用户资料信息。
         Args:
             user_id(string): 目标用户 QQ 号，必须是数字。不填时默认当前用户。
-            send_image(bool): 是否发送图片，默认为 False。
+            send_image(bool): 是否发送图片，默认为 True。
         """
         target_id = str(user_id).strip() or event.get_sender_id()
 
@@ -257,7 +257,7 @@ class BoxPlugin(Star):
 
         digest = render_digest(result.display, avatar)
         cache_name = f"{result.target_id}_{digest}.png"
-        cache_path = self.cfg.cache_dir / cache_name
+        cache_path = self.cfg.temp_dir / cache_name
 
         if cache_path.exists():
             image = cache_path.read_bytes()
@@ -366,29 +366,24 @@ class BoxPlugin(Star):
         info1: dict[str, Any],
         info2: dict[str, Any],
     ):
+        birthday = self._parse_birthday(info1)
+
         if key == "birthday":
-            y, m, d = (
-                info1.get("birthday_year"),
-                info1.get("birthday_month"),
-                info1.get("birthday_day"),
-            )
-            return [f"{label}：{y}-{m}-{d}"] if y and m and d else []
+            if birthday:
+                return [f"{label}：{birthday:%Y-%m-%d}"]
+            return []
 
         if key == "constellation":
-            m, d = info1.get("birthday_month"), info1.get("birthday_day")
-            return [f"{label}：{get_constellation(int(m), int(d))}"] if m and d else []
+            if birthday:
+                return [f"{label}：{get_constellation(birthday.month, birthday.day)}"]
+            return []
 
         if key == "zodiac":
-            y, m, d = (
-                info1.get("birthday_year"),
-                info1.get("birthday_month"),
-                info1.get("birthday_day"),
-            )
-            return (
-                [f"{label}：{get_zodiac(int(y), int(m), int(d))}"]
-                if y and m and d
-                else []
-            )
+            if birthday:
+                return [
+                    f"{label}：{get_zodiac(birthday.year, birthday.month, birthday.day)}"
+                ]
+            return []
 
         if key == "address":
             c, p, ci = info1.get("country"), info1.get("province"), info1.get("city")
@@ -402,6 +397,19 @@ class BoxPlugin(Star):
 
         return []
 
+    def _parse_birthday(self, info: dict[str, Any]) -> date | None:
+        year = info.get("birthday_year")
+        month = info.get("birthday_month")
+        day = info.get("birthday_day")
+
+        if not (year and month and day):
+            return None
+
+        try:
+            return date(int(year), int(month), int(day))
+        except (TypeError, ValueError):
+            return None
+
     async def terminate(self):
         if self._recall_tasks:
             for t in list(self._recall_tasks):
@@ -411,8 +419,3 @@ class BoxPlugin(Star):
         if self.library:
             await self.library.close()
 
-        if self.cfg.clean_cache and self.cfg.cache_dir.exists():
-            try:
-                shutil.rmtree(self.cfg.cache_dir)
-            except Exception as e:
-                logger.error(f"清缓存失败: {e}")
