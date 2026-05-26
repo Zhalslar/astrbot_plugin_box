@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
+from pathlib import Path
 from types import MappingProxyType, UnionType
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
 from astrbot.api import logger
 from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.star.context import Context
-from astrbot.core.star.star_tools import StarTools
+from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 
 class ConfigNode:
@@ -110,27 +111,21 @@ class AutoBoxConfig(ConfigNode):
     enter: bool
     exit: bool
 
-class LibraryConfig(ConfigNode):
-    cookies: str
-    desensitize: bool
-    recall_desen_time: int
-
 class PluginConfig(ConfigNode):
     only_admin: bool
     protect_ids: list[str]
     autobox: AutoBoxConfig
     display_options: list[str]
     recall_time: int
-    clean_cache: bool
-    library: LibraryConfig
+
+    _plugin_name: str = "astrbot_plugin_box"
 
     def __init__(self, cfg: AstrBotConfig, context: Context):
         super().__init__(cfg)
         self.context = context
         self.admins_id: list[str] = context.get_config().get("admins_id", [])
-        self.data_dir = StarTools.get_data_dir("astrbot_plugin_box")
-        self.cache_dir = self.data_dir / "cache"
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.temp_dir = Path(get_astrbot_temp_path()) / self._plugin_name / "box_cards"
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
         self._normalize_protect_ids()
 
     def _normalize_protect_ids(self):

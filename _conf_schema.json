@@ -107,41 +107,5 @@
             "step": 1
         },
         "default": 10
-    },
-    "clean_cache": {
-        "description": "重载插件时清空缓存",
-        "hint": "当插件重载时，清空缓存的开盒卡片",
-        "type": "bool",
-        "default": false
-    },
-    "library": {
-        "description": "高级配置",
-        "type": "object",
-        "hint": "普通用户无需先写此配置，开发人员专用",
-        "items": {
-            "cookies": {
-                "description": "Cookie",
-                "hint": "略",
-                "type": "text",
-                "default": ""
-            },
-            "desensitize": {
-                "description": "去敏化",
-                "hint": "略",
-                "type": "bool",
-                "default": false
-            },
-            "recall_desen_time": {
-                "description": "敏感撤回时间",
-                "hint": "略",
-                "type": "int",
-                "slider": {
-                    "min": 0,
-                    "max": 110,
-                    "step": 1
-                },
-                "default": 5
-            }
-        }
     }
 }
