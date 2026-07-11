@@ -101,8 +101,7 @@ class BoxPlugin(Star):
             )
 
             if result.is_fail():
-                error = "Invalid QQ ID." if result.error == "无效QQ号" else result.error
-                return f"Box query failed: {error}"
+                return f"Box query failed: {result.error}"
 
             if send_image:
                 await self.send_box_image(event, result)
@@ -217,7 +216,7 @@ class BoxPlugin(Star):
         ats.update(
             arg[1:]
             for arg in event.message_str.split()
-            if arg.startswith("@") and arg[1:].isdigit()
+            if arg.startswith("@") and arg[1:].isdigit() or arg.isdigit()
         )
         ats.discard(event.get_self_id())
         if block_ids:
