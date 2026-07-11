@@ -13,16 +13,6 @@ from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 
 class ConfigNode:
-    """
-    配置节点, 把 dict 变成强类型对象。
-
-    规则：
-    - schema 来自子类类型注解
-    - 声明字段：读写，写回底层 dict
-    - 未声明字段和下划线字段：仅挂载属性，不写回
-    - 支持 ConfigNode 多层嵌套（lazy + cache）
-    """
-
     _SCHEMA_CACHE: dict[type, dict[str, type]] = {}
     _FIELDS_CACHE: dict[type, set[str]] = {}
 
@@ -55,7 +45,7 @@ class ConfigNode:
                 continue
             if self._is_optional(tp):
                 continue
-            logger.warning(f"[config:{self.__class__.__name__}] 缺少字段: {key}")
+            logger.warning(f"[config:{self.__class__.__name__}] miss key: {key}")
 
     def __getattr__(self, key: str) -> Any:
         if key in self._fields():
@@ -67,8 +57,7 @@ class ConfigNode:
                 if key not in children:
                     if not isinstance(value, MutableMapping):
                         raise TypeError(
-                            f"[config:{self.__class__.__name__}] "
-                            f"字段 {key} 期望 dict，实际是 {type(value).__name__}"
+                            f"[config:{self.__class__.__name__}] not a dict"
                         )
                     children[key] = tp(value)
                 return children[key]
@@ -87,23 +76,15 @@ class ConfigNode:
         object.__setattr__(self, key, value)
 
     def raw_data(self) -> Mapping[str, Any]:
-        """
-        底层配置 dict 的只读视图
-        """
         return MappingProxyType(self._data)
 
     def save_config(self) -> None:
-        """
-        保存配置到磁盘（仅允许在根节点调用）
-        """
+
         if not isinstance(self._data, AstrBotConfig):
             raise RuntimeError(
-                f"{self.__class__.__name__}.save_config() 只能在根配置节点上调用"
+                f"{self.__class__.__name__}.save_config() only support AstrBotConfig"
             )
         self._data.save_config()
-
-
-# ============ 插件自定义配置 ==================
 
 
 class AutoBoxConfig(ConfigNode):
@@ -111,12 +92,16 @@ class AutoBoxConfig(ConfigNode):
     enter: bool
     exit: bool
 
+
 class PluginConfig(ConfigNode):
     only_admin: bool
     protect_ids: list[str]
     autobox: AutoBoxConfig
     display_options: list[str]
     recall_time: int
+    desensitize: bool
+    mystery_url: str
+    mystery_cookies: str
 
     _plugin_name: str = "astrbot_plugin_box"
 
@@ -135,3 +120,7 @@ class PluginConfig(ConfigNode):
             if admin_id not in self.protect_ids:
                 self.protect_ids.append(admin_id)
         self.save_config()
+
+    @property
+    def library_switch(self) -> bool:
+        return bool(self.mystery_url) and self.mystery_url.startswith("https://")

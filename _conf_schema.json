@@ -40,6 +40,8 @@
         "hint": "打勾表示显示，取消勾选表示不显示",
         "options": [
             "QQ号",
+            "UID",
+            "QID",
             "昵称",
             "备注",
             "群昵称",
@@ -54,6 +56,8 @@
             "邮箱",
             "家乡",
             "现居",
+            "学校",
+            "职位",
             "职业",
             "个性标签",
             "风险账号",
@@ -65,6 +69,13 @@
             "加群时间",
             "QQ等级",
             "注册时间",
+            "登录天数",
+            "隐藏QQ等级",
+            "隐藏特权图标",
+            "屏蔽用户",
+            "消息免打扰",
+            "特别关心",
+            "空间特别关心",
             "签名"
         ],
         "default": [
@@ -107,5 +118,24 @@
             "step": 1
         },
         "default": 10
+    },
+    "desensitize": {
+        "description": "信息脱敏",
+        "type": "bool",
+        "hint": "对敏感信息进行脱敏处理，一般用不到，正常使用时没有敏感信息",
+        "default": true
+    },
+    "mystery_url": {
+        "description": "拓展配置项",
+        "hint": "无需填写，仅供开发人员使用",
+        "type": "string",
+        "default": ""
+    },
+    "mystery_cookies": {
+        "description": "cookies",
+        "hint": "",
+        "type": "string",
+        "invisible": true,
+        "default": ""
     }
 }
