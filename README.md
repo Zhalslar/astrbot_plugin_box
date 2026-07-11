@@ -20,7 +20,7 @@ _✨ QQ资料卡片插件 ✨_
 
 ## 📦 安装
 
-在astrbot插件界面通过链接安装：https://github.com/Zhalslar/astrbot_plugin_box
+在astrbot的插件面板上通过链接安装：[https://github.com/Zhalslar/astrbot_plugin_box](https://github.com/Zhalslar/astrbot_plugin_box)
 
 ## ⌨️ 使用说明
 
