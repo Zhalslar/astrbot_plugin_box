@@ -213,11 +213,11 @@ class BoxPlugin(Star):
         block_ids: list[str] | None = None,
     ) -> list[str]:
         ats = {str(seg.qq) for seg in event.get_messages()[1:] if isinstance(seg, At)}
-        ats.update(
-            arg[1:]
-            for arg in event.message_str.split()
-            if arg.startswith("@") and arg[1:].isdigit() or arg.isdigit()
-        )
+        for arg in event.message_str.split():
+            if arg.startswith("@") and arg[1:].isdigit():
+                ats.add(arg[1:])
+            elif arg.isdigit():
+                ats.add(arg)
         ats.discard(event.get_self_id())
         if block_ids:
             ats.difference_update(block_ids)
