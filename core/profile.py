@@ -46,7 +46,7 @@ class BoxUserProfile:
         "reg_time": "注册时间",
         "login_days": "登录天数",
         "isHideQQLevel": "隐藏QQ等级",
-        "isHidePrivilegeIcon": "隐藏特权图标",
+        "isHidePrivilegeIcon": "特权图标",
         "isBlock": "屏蔽用户",
         "isMsgDisturb": "免打扰",
         "isSpecialCareOpen": "特别关心",
@@ -345,7 +345,7 @@ class BoxUserProfile:
                     return [f"{label}：{self.login_days}天"]
                 return []
             case "isHidePrivilegeIcon":
-                return ["特权图标：隐藏"] if self.hide_privilege_icon else []
+                return [f"{label}：隐藏"] if self.hide_privilege_icon else []
             case "isBlock":
                 return [f"{label}：是"] if self.is_block else []
             case "isMsgDisturb":
