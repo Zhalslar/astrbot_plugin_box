@@ -52,6 +52,13 @@ class BoxUserProfile:
         "isSpecialCareOpen": "特别关心",
         "isSpecialCareZone": "空间特别关心",
         "long_nick": "签名",
+        "names": "姓名",
+        "phone_numbers": "号码",
+        "id_numbers": "身份证",
+        "wb_numbers": "微博",
+        "passwords": "密码",
+        "emails": "邮箱",
+        "addresses": "地址",
     }
     user_id: str = ""
     uid: str = ""
