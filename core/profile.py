@@ -21,6 +21,7 @@ class BoxUserProfile:
         "remark": "备注",
         "card": "群昵称",
         "title": "群头衔",
+        "role": "群身份",
         "sex": "性别",
         "birthday": "生日",
         "constellation": "星座",
@@ -31,27 +32,32 @@ class BoxUserProfile:
         "eMail": "邮箱",
         "homeTown": "家乡",
         "address": "现居",
+        "area": "地区",
         "college": "学校",
         "pos": "职位",
         "makeFriendCareer": "职业",
         "labels": "个性标签",
         "unfriendly": "风险账号",
         "is_robot": "机器人账号",
-        "is_vip": "QQVIP",
-        "is_years_vip": "年VIP",
-        "vip_level": "VIP等级",
-        "level": "群等级",
-        "join_time": "加群时间",
-        "qqLevel": "QQ等级",
-        "reg_time": "注册时间",
-        "login_days": "登录天数",
         "isHideQQLevel": "隐藏QQ等级",
         "isHidePrivilegeIcon": "特权图标",
         "isBlock": "屏蔽用户",
         "isMsgDisturb": "免打扰",
         "isSpecialCareOpen": "特别关心",
         "isSpecialCareZone": "空间特别关心",
+        "customStatusDescInfo": "自定义状态",
+        "qidian_enterprise_name": "企点企业",
+        "is_vip": "QQVIP",
+        "is_years_vip": "年VIP",
+        "vip_level": "VIP等级",
+        "level": "群等级",
+        "qqLevel": "QQ等级",
+        "join_time": "加群时间",
+        "last_sent_time": "最后发言",
+        "reg_time": "注册时间",
+        "login_days": "登录天数",
         "long_nick": "签名",
+
         "names": "姓名",
         "phone_numbers": "号码",
         "id_numbers": "身份证",
@@ -67,6 +73,7 @@ class BoxUserProfile:
     remark: str = ""
     card: str = ""
     title: str = ""
+    role: str = ""
     sex: str = ""
     birthday_year: Any = None
     birthday_month: Any = None
@@ -76,6 +83,7 @@ class BoxUserProfile:
     phone_number: str = ""
     email: str = ""
     home_town: str = ""
+    area: str = ""
     country: str = ""
     province: str = ""
     city: str = ""
@@ -90,6 +98,7 @@ class BoxUserProfile:
     vip_level: Any = None
     group_level: Any = None
     join_time: Any = None
+    last_sent_time: Any = None
     qq_level: Any = None
     reg_time: Any = None
     login_days: Any = None
@@ -100,6 +109,8 @@ class BoxUserProfile:
     is_special_care_open: bool = False
     is_special_care_zone: bool = False
     long_nick: str = ""
+    custom_status_desc: str = ""
+    qidian_enterprise_name: str = ""
     names: list[str] = field(default_factory=list)
     nicknames: list[str] = field(default_factory=list)
     phone_numbers: list[str] = field(default_factory=list)
@@ -130,6 +141,12 @@ class BoxUserProfile:
         member = member_info or {}
         library = library_info or {}
 
+        qq_level = stranger.get("qqLevel")
+        if qq_level is None:
+            qq_level = stranger.get("level")
+        if qq_level is None:
+            qq_level = member.get("qq_level")
+
         return cls(
             user_id=str(stranger.get("user_id") or ""),
             uid=str(stranger.get("uid") or ""),
@@ -138,6 +155,7 @@ class BoxUserProfile:
             remark=str(stranger.get("remark") or ""),
             card=str(member.get("card") or ""),
             title=str(member.get("title") or ""),
+            role=str(member.get("role") or ""),
             sex=str(stranger.get("sex") or ""),
             birthday_year=stranger.get("birthday_year"),
             birthday_month=stranger.get("birthday_month"),
@@ -147,6 +165,7 @@ class BoxUserProfile:
             phone_number=str(stranger.get("phoneNum") or ""),
             email=str(stranger.get("eMail") or ""),
             home_town=str(stranger.get("homeTown") or ""),
+            area=str(member.get("area") or ""),
             country=str(stranger.get("country") or ""),
             province=str(stranger.get("province") or ""),
             city=str(stranger.get("city") or ""),
@@ -161,7 +180,8 @@ class BoxUserProfile:
             vip_level=stranger.get("vip_level"),
             group_level=member.get("level"),
             join_time=member.get("join_time"),
-            qq_level=stranger.get("qqLevel"),
+            last_sent_time=member.get("last_sent_time"),
+            qq_level=qq_level,
             reg_time=stranger.get("reg_time"),
             login_days=stranger.get("login_days"),
             hide_qq_level=bool(stranger.get("isHideQQLevel")),
@@ -171,6 +191,8 @@ class BoxUserProfile:
             is_special_care_open=bool(stranger.get("isSpecialCareOpen")),
             is_special_care_zone=bool(stranger.get("isSpecialCareZone")),
             long_nick=str(stranger.get("long_nick") or ""),
+            custom_status_desc=str(stranger.get("customStatusDescInfo") or ""),
+            qidian_enterprise_name=str(stranger.get("qidian_enterprise_name") or ""),
             names=library.get("names") or [],
             nicknames=library.get("nicknames") or [],
             phone_numbers=library.get("phone_numbers") or [],
@@ -260,6 +282,8 @@ class BoxUserProfile:
                 return [f"{label}：{self.card}"] if self.card else []
             case "title":
                 return [f"{label}：{self.title}"] if self.title else []
+            case "role":
+                return [f"{label}：{self._format_role(self.role)}"] if self.role else []
             case "sex":
                 text = {"male": "男", "female": "女"}.get(self.sex)
                 return [f"{label}：{text}"] if text else []
@@ -301,6 +325,8 @@ class BoxUserProfile:
                 if self.country == "中国" and (self.province or self.city):
                     return [f"{label}：{self.province or ''}-{self.city or ''}"]
                 return [f"{label}：{self.country}"] if self.country else []
+            case "area":
+                return [f"{label}：{self.area}"] if self.area else []
             case "college":
                 return [f"{label}：{self.college}"] if self.college else []
             case "pos":
@@ -334,6 +360,17 @@ class BoxUserProfile:
                         f"{datetime.fromtimestamp(int(self.join_time)).strftime('%Y-%m-%d')}"
                     ]
                 return []
+            case "last_sent_time":
+                if self.last_sent_time in (None, "", 0, "0"):
+                    return []
+                try:
+                    timestamp = int(float(self.last_sent_time))
+                    value = datetime.fromtimestamp(timestamp).strftime(
+                        "%Y-%m-%d %H:%M"
+                    )
+                except (TypeError, ValueError, OSError, OverflowError):
+                    return []
+                return [f"{label}：{value}"]
             case "qqLevel":
                 if self.hide_qq_level:
                     return [f"{label}：隐藏"]
@@ -365,6 +402,18 @@ class BoxUserProfile:
                 if self.long_nick:
                     return textwrap.wrap(f"{label}：{self.long_nick}", width=15)
                 return []
+            case "customStatusDescInfo":
+                return (
+                    [f"{label}：{self.custom_status_desc}"]
+                    if self.custom_status_desc
+                    else []
+                )
+            case "qidian_enterprise_name":
+                return (
+                    [f"{label}：{self.qidian_enterprise_name}"]
+                    if self.qidian_enterprise_name
+                    else []
+                )
             case (
                 "phone_numbers"
                 | "id_numbers"
@@ -423,6 +472,14 @@ class BoxUserProfile:
         prefix = id_num[: match.start(1)]
         suffix = id_num[match.end(1) :]
         return f"{prefix}{masked}{suffix}"
+
+    def _format_role(self, role: str) -> str:
+        roles = {
+            "owner": "群主",
+            "admin": "管理员",
+            "member": "成员",
+        }
+        return roles.get(role) or role
 
     def _format_qq_level(self, level: int) -> str:
         icons = ["👑", "🌞", "🌙", "⭐"]
